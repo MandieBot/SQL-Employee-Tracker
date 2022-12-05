@@ -30,6 +30,15 @@ const starterPrompts = [
   },
 ];
 
+const viewAllDepts = () => {
+  db.promise()
+    .query(`SELECT * FROM department`)
+    .then((response) => {
+      console.table(response[0]);
+      menu();
+    });
+};
+
 const viewAllRoles = () => {
   //   db.promise()
   //     .query(
@@ -109,6 +118,8 @@ const menu = () => {
       viewAllRoles();
     } else if (pageLoad == "Update an Employee Role") {
       updateEmpRole();
+    } else if (pageLoad == "View All Departments") {
+      viewAllDepts();
     } else {
       endProgram();
     }
