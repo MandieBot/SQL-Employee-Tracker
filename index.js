@@ -3,7 +3,7 @@
 const inquirer = require("inquirer");
 const path = require("path");
 const { title } = require("process");
-const db = require("./lib/dbClass");
+const db = require("./lib/dbConnections");
 require("console.table");
 
 //Storing the responses in an empty array
@@ -67,15 +67,6 @@ const viewAllDepts = () => {
 //Function to view all roles
 
 const viewAllRoles = () => {
-  //   db.promise()
-  //     .query(
-  //       `SELECT role.id, role.title, role.salary, department.name AS 'department_name' FROM role
-  // LEFT JOIN department ON department.id = role.department_id;`
-  //     )
-  //     .then((err, result) => {
-  //       if (err) console.log(err);
-  //       console.table(result[0]);
-  //     });
   db.query(
     `SELECT role.id, role.title, role.salary, department.name AS 'department_name' FROM role 
 LEFT JOIN department ON department.id = role.department_id;`,
@@ -86,6 +77,8 @@ LEFT JOIN department ON department.id = role.department_id;`,
     }
   );
 };
+
+//Function to update employee role
 
 const updateEmpRole = () => {
   db.promise()
