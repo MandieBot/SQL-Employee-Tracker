@@ -30,6 +30,31 @@ const starterPrompts = [
   },
 ];
 
+//Run a function for each selectable item in the menu
+
+const menu = () => {
+  inquirer.prompt(starterPrompts).then(({ pageLoad }) => {
+    if (pageLoad == "View All Employees") {
+      viewAllEmployees();
+    } else if (pageLoad == "Add an Employee") {
+      addNewEmployee();
+    } else if (pageLoad == "View All Roles") {
+      viewAllRoles();
+    } else if (pageLoad == "Update an Employee Role") {
+      updateEmpRole();
+    } else if (pageLoad == "View All Departments") {
+      viewAllDepts();
+    } else if (pageLoad == "Add Role") {
+      addNewRole();
+    } else if (pageLoad == "Add Department") {
+      addNewDept();
+    } else {
+      endProgram();
+    }
+  });
+};
+//Function to view all departments
+
 const viewAllDepts = () => {
   db.promise()
     .query(`SELECT * FROM department`)
@@ -38,6 +63,8 @@ const viewAllDepts = () => {
       menu();
     });
 };
+
+//Function to view all roles
 
 const viewAllRoles = () => {
   //   db.promise()
@@ -64,7 +91,6 @@ const updateEmpRole = () => {
   db.promise()
     .query("SELECT * FROM role")
     .then((roles) => {
-      //   console.log(roles);
       let role_id = roles[0].map((role) => {
         return role.id;
       });
@@ -98,7 +124,6 @@ const updateEmpRole = () => {
               .query(updateQuery)
               .then((err, result) => {
                 if (err) console.log(err);
-                // console.log(result);
                 menu();
               });
           });
@@ -106,24 +131,67 @@ const updateEmpRole = () => {
     });
 };
 
-//Run a function for each selectable item in the menu
+//Function to add new department to database
 
-const menu = () => {
-  inquirer.prompt(starterPrompts).then(({ pageLoad }) => {
-    if (pageLoad == "View All Employees") {
-      viewAllEmployees();
-    } else if (pageLoad == "Add an Employee") {
-      addNewEmployee();
-    } else if (pageLoad == "View All Roles") {
-      viewAllRoles();
-    } else if (pageLoad == "Update an Employee Role") {
-      updateEmpRole();
-    } else if (pageLoad == "View All Departments") {
-      viewAllDepts();
-    } else {
-      endProgram();
-    }
-  });
+const addNewDept = () => {
+  db.promise()
+    .query("SELECT * FROM department;")
+    .then((answer) => {});
+};
+
+//Function to add new role to database
+
+const addNewRole = () => {
+  db.promise()
+    .query("SELECT * FROM role;")
+    .then((res) => {
+      const addRoleQuestions = addRole;
+    });
+  [
+    {
+      type: "input",
+      name: "roleName",
+      message: "What is the name of the role?",
+    },
+    {
+      type: "input",
+      name: "roleSalary",
+      message: "What is the salary of the role?",
+    },
+    {
+      type: "list",
+      name: "roleDept",
+      message: "What department does the role belong to?",
+      choices: ["Engineering", "Finance", "Legal", "Sales"],
+    },
+  ];
+};
+
+//Function to view table of employees
+
+const viewAllEmployees = () => {
+  db.promise()
+    .query(
+      `
+        SELECT employee.id, 
+        employee.first_name, 
+        employee.last_name, 
+        title, 
+        salary, name AS department,
+        CONCAT(manager.first_name, ' ', manager.last_name) AS manager
+        FROM employee
+        JOIN role
+        ON employee.role_id = role.id
+        JOIN department
+        ON role.department_id = department.id
+        LEFT JOIN employee AS manager
+        ON employee.manager_id = manager.id;
+        `
+    )
+    .then((response) => {
+      console.table(response[0]);
+      menu();
+    });
 };
 
 //Prompts for adding an employee
@@ -139,65 +207,7 @@ const addEmployee = [
     name: "lastName",
     message: "What is the employee's last name?",
   },
-  //   {
-  //     type: "list",
-  //     name: "empRole",
-  //     message: "What is the employee's role?",
-  //     choices: ["Sales Team Lead", "Sales Representative", "Lead Engineer", "Software Engineer", "Account Manager", "Accountant", "Legal Team Lead"],
-  //   },
-  //   {
-  //     type: "list",
-  //     name: "empManager",
-  //   message: "Who is the employee's manager?",
-  //     choices: ["None", ""],
-  //   },
 ];
-
-// const addRole = [
-//   {
-//     type: "input",
-//     name: "roleName",
-//     message: "What is the name of the role?",
-//   },
-//   {
-//     type: "input",
-//     name: "roleSalary",
-//     message: "What is the salary of the role?",
-//   },
-//   {
-//     type: "list",
-//     name: "roleDept",
-//     message: "What department does the role belong to?",
-//     choices: ["Engineering", "Finance", "Legal", "Sales"],
-//   },
-// ];
-
-//The query() method takes an SQL string and it returns a Promise object. The promise will be “resolved” when the query finished executing. The returned rows will be the result of the promise. In case of an error, the promise will be “rejected”.
-
-const viewAllEmployees = () => {
-  db.promise()
-    .query(
-      `
-    SELECT employee.id, 
-    employee.first_name, 
-    employee.last_name, 
-    title, 
-    salary, name AS department,
-    CONCAT(manager.first_name, ' ', manager.last_name) AS manager
-    FROM employee
-    JOIN role
-    ON employee.role_id = role.id
-    JOIN department
-    ON role.department_id = department.id
-    LEFT JOIN employee AS manager
-    ON employee.manager_id = manager.id;
-  `
-    )
-    .then((response) => {
-      console.table(response[0]);
-      menu();
-    });
-};
 
 // Run a function when Add Employee is selected
 
@@ -205,7 +215,7 @@ const addNewEmployee = () => {
   db.promise()
     .query("SELECT * FROM employee;")
     .then((resp) => {
-      const questionsToAsk = addEmployee; // ?
+      const questionsToAsk = addEmployee;
       const managerOptions = resp[0].map(({ id, first_name, last_name }) => ({
         name: `${first_name} ${last_name}`,
         value: id,
