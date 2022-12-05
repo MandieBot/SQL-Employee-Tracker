@@ -1,11 +1,16 @@
+//Imports
+
 const inquirer = require("inquirer");
-// const fs = require("fs");
 const path = require("path");
 const { title } = require("process");
 const db = require("./lib/dbClass");
 require("console.table");
 
+//Storing the responses in an empty array
+
 const responses = [];
+
+//Creating a variable with the prompts to start the program
 
 const starterPrompts = [
   {
@@ -25,17 +30,92 @@ const starterPrompts = [
   },
 ];
 
+const viewAllRoles = () => {
+  //   db.promise()
+  //     .query(
+  //       `SELECT role.id, role.title, role.salary, department.name AS 'department_name' FROM role
+  // LEFT JOIN department ON department.id = role.department_id;`
+  //     )
+  //     .then((err, result) => {
+  //       if (err) console.log(err);
+  //       console.table(result[0]);
+  //     });
+  db.query(
+    `SELECT role.id, role.title, role.salary, department.name AS 'department_name' FROM role 
+LEFT JOIN department ON department.id = role.department_id;`,
+    (err, result) => {
+      if (err) console.log(err);
+      console.table(result);
+      menu();
+    }
+  );
+};
+
+const updateEmpRole = () => {
+  db.promise()
+    .query("SELECT * FROM role")
+    .then((roles) => {
+      //   console.log(roles);
+      let role_id = roles[0].map((role) => {
+        return role.id;
+      });
+      db.promise()
+        .query("SELECT * FROM employee")
+        .then((employees) => {
+          let employee_name = employees[0].map((employee) => {
+            return employee.first_name;
+          });
+          console.log(role_id);
+          console.log(employee_name);
+          let updateRoleQuestions = [
+            {
+              type: "list",
+              name: "selected_employee",
+              message: "Select the employee you would like to update the role for.",
+              choices: employee_name,
+            },
+            {
+              type: "list",
+              name: "updated_role",
+              message: "Select the new role.",
+              choices: role_id,
+            },
+          ];
+
+          inquirer.prompt(updateRoleQuestions).then((result) => {
+            console.log(result);
+            let updateQuery = `UPDATE employee SET role_id = ${result.updated_role} WHERE first_name = '${result.selected_employee}'`;
+            db.promise()
+              .query(updateQuery)
+              .then((err, result) => {
+                if (err) console.log(err);
+                // console.log(result);
+                menu();
+              });
+          });
+        });
+    });
+};
+
+//Run a function for each selectable item in the menu
+
 const menu = () => {
   inquirer.prompt(starterPrompts).then(({ pageLoad }) => {
     if (pageLoad == "View All Employees") {
       viewAllEmployees();
     } else if (pageLoad == "Add an Employee") {
       addNewEmployee();
+    } else if (pageLoad == "View All Roles") {
+      viewAllRoles();
+    } else if (pageLoad == "Update an Employee Role") {
+      updateEmpRole();
     } else {
       endProgram();
     }
   });
 };
+
+//Prompts for adding an employee
 
 const addEmployee = [
   {
@@ -57,6 +137,7 @@ const addEmployee = [
   //   {
   //     type: "list",
   //     name: "empManager",
+  //   message: "Who is the employee's manager?",
   //     choices: ["None", ""],
   //   },
 ];
@@ -79,6 +160,8 @@ const addEmployee = [
 //     choices: ["Engineering", "Finance", "Legal", "Sales"],
 //   },
 // ];
+
+//The query() method takes an SQL string and it returns a Promise object. The promise will be “resolved” when the query finished executing. The returned rows will be the result of the promise. In case of an error, the promise will be “rejected”.
 
 const viewAllEmployees = () => {
   db.promise()
@@ -105,11 +188,13 @@ const viewAllEmployees = () => {
     });
 };
 
+// Run a function when Add Employee is selected
+
 const addNewEmployee = () => {
   db.promise()
     .query("SELECT * FROM employee;")
     .then((resp) => {
-      const questionsToAsk = addEmployee;
+      const questionsToAsk = addEmployee; // ?
       const managerOptions = resp[0].map(({ id, first_name, last_name }) => ({
         name: `${first_name} ${last_name}`,
         value: id,
@@ -165,8 +250,11 @@ const addNewEmployee = () => {
     });
 };
 
+// Function to quit the program
+
 const endProgram = () => {
   process.exit();
 };
 
+// Calling the menu function to display starter prompts
 menu();
