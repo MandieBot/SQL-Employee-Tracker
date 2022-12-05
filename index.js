@@ -133,38 +133,57 @@ const updateEmpRole = () => {
 
 //Function to add new department to database
 
+const newDept = [
+  {
+    type: "input",
+    name: "department",
+    message: "What is the department you would like to add?",
+  },
+];
+
 const addNewDept = () => {
-  db.promise()
-    .query("SELECT * FROM department;")
-    .then((answer) => {});
+  inquirer.prompt(newDept).then((answer) => {
+    db.query(`INSERT INTO department(name) VALUES ("${answer.department}")`, (err, res) => {
+      menu();
+    });
+  });
 };
 
 //Function to add new role to database
 
 const addNewRole = () => {
-  db.promise()
-    .query("SELECT * FROM role;")
-    .then((res) => {
-      const addRoleQuestions = addRole;
-    });
-  [
-    {
-      type: "input",
-      name: "roleName",
-      message: "What is the name of the role?",
-    },
-    {
-      type: "input",
-      name: "roleSalary",
-      message: "What is the salary of the role?",
-    },
-    {
-      type: "list",
-      name: "roleDept",
-      message: "What department does the role belong to?",
-      choices: ["Engineering", "Finance", "Legal", "Sales"],
-    },
-  ];
+  db.query("SELECT * FROM department;", (err, res) => {
+    if (err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          name: "roleName",
+          message: "What is the name of the role?",
+        },
+        {
+          type: "input",
+          name: "roleSalary",
+          message: "What is the salary of the role?",
+        },
+        {
+          type: "list",
+          name: "roleDept",
+          message: "What department does the role belong to?",
+          choices: res.map((department) => department.name),
+        },
+      ])
+      .then(function (answer) {
+        const deptId = res.find((department) => department.name === answer.roleDept);
+        console.log(deptId);
+        db.query(`INSERT INTO role SET ?`, {
+          title: answer.roleName,
+          salary: answer.roleSalary,
+          department_id: deptId.id,
+        });
+        menu();
+      });
+  });
 };
 
 //Function to view table of employees
